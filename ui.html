@@ -1,0 +1,123 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Humanize KR — local</title>
+<style>
+  :root{--bg:#fafaf8;--fg:#1f1f1f;--muted:#777;--line:#ddd;--acc:#2f6fed}
+  body{font:15px/1.65 -apple-system,"Pretendard","Apple SD Gothic Neo",system-ui,sans-serif;background:var(--bg);color:var(--fg);max-width:1200px;margin:0 auto;padding:20px 16px}
+  h1{font-size:20px;margin:0 0 4px}h1 small{font-weight:400;color:var(--muted);font-size:13px}
+  .row{display:flex;gap:16px;flex-wrap:wrap}.row>*{flex:1;min-width:300px}
+  textarea{width:100%;height:300px;font:inherit;padding:10px;border:1px solid var(--line);border-radius:6px;box-sizing:border-box;background:#fff;resize:vertical}
+  .bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:12px 0}
+  select,button{font:inherit;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:#fff}
+  button.primary{background:var(--acc);color:#fff;border-color:var(--acc);padding:6px 22px;cursor:pointer}button:disabled{opacity:.5}
+  #status{color:var(--muted);font-size:13px}
+  #stages{font-size:13px;color:var(--muted);margin:6px 0;min-height:1.4em}#stages b{color:var(--fg)}
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-top:14px}
+  .tabs button{border:none;border-bottom:2px solid transparent;border-radius:0;background:none;padding:6px 12px;cursor:pointer;color:var(--muted)}
+  .tabs button.on{color:var(--fg);border-bottom-color:var(--acc)}
+  .pane{display:none;padding:12px 0}.pane.on{display:block}
+  pre{white-space:pre-wrap;background:#f1f1ee;padding:12px;border-radius:6px;font-size:13px;line-height:1.5;overflow-x:auto}
+  #diff{background:#fff;border:1px solid var(--line);padding:12px;border-radius:6px;line-height:1.9}
+  del{background:#fde2e2;color:#a33;text-decoration:line-through}ins{background:#dff5e1;color:#1a6b2a;text-decoration:none}
+  .badge{display:inline-block;padding:2px 8px;border-radius:10px;font-size:12px;font-weight:600}
+  .g0{background:#dff5e1;color:#1a6b2a}.g1{background:#fff2cc;color:#8a6100}.g2,.g3{background:#fde2e2;color:#a33}
+  #meta{margin:10px 0;font-size:14px}#meta span{margin-right:14px}
+  #runs{font-size:13px}#runs li{cursor:pointer;padding:3px 0;list-style:none}#runs li:hover{color:var(--acc)}
+  details{margin-top:14px}summary{cursor:pointer;color:var(--muted);font-size:13px}
+  @media (max-width:700px){textarea{height:200px}}
+</style>
+
+<h1>Humanize KR <small>— 로컬 Ollama · AI 한글 티 제거</small></h1>
+<div id="stages"></div>
+<div class="row">
+  <textarea id="in" placeholder="AI가 쓴 한글을 붙여넣으세요"></textarea>
+  <textarea id="out" placeholder="윤문 결과 (토큰 스트리밍)" readonly></textarea>
+</div>
+<div class="bar">
+  <label>모델 <select id="model"></select></label>
+  <label>장르 <select id="genre"><option>essay<option>column<option>report<option>blog<option>abstract</select></label>
+  <label>경로 <select id="route"><option value="">auto (route_hint)<option>light<option>standard<option>heavy</select></label>
+  <button id="go" class="primary">윤문</button>
+  <button id="copy">결과 복사</button>
+  <span id="status"></span>
+</div>
+
+<div id="res" hidden>
+  <div id="meta"></div>
+  <div class="tabs">
+    <button data-t="diff" class="on">변경 비교</button>
+    <button data-t="diag">진단</button>
+    <button data-t="gate">게이트 리포트</button>
+    <button data-t="summary">SUMMARY</button>
+    <button data-t="log">로그</button>
+  </div>
+  <div id="p-diff" class="pane on"><div id="diff"></div></div>
+  <div id="p-diag" class="pane"><pre id="diag"></pre></div>
+  <div id="p-gate" class="pane"><pre id="gate"></pre></div>
+  <div id="p-summary" class="pane"><pre id="summary"></pre></div>
+  <div id="p-log" class="pane"><pre id="log"></pre></div>
+</div>
+
+<details><summary>이전 실행 기록</summary><ul id="runs"></ul></details>
+
+<script>
+const $ = id => document.getElementById(id);
+const MODEL_DEFAULT = %MODEL%;
+fetch('/api/models').then(r => r.json()).then(ms => {
+  $('model').innerHTML = ms.map(m => `<option ${m === MODEL_DEFAULT ? 'selected' : ''}>${m}</option>`).join('');
+}).catch(() => $('status').textContent = 'LLM 서버에 연결할 수 없습니다 (LLM_BASE_URL 확인)');
+
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => {
+  document.querySelectorAll('.tabs button, .pane').forEach(e => e.classList.remove('on'));
+  b.classList.add('on'); $('p-' + b.dataset.t).classList.add('on');
+});
+$('copy').onclick = () => navigator.clipboard.writeText($('out').value);
+
+function show(j) {
+  $('out').value = j.output; $('res').hidden = false;
+  const rate = j.change_rate != null ? (j.change_rate * 100).toFixed(1) + '%' : '-';
+  $('meta').innerHTML = `<span>run <code>${j.run_id}</code></span><span>경로 <b>${j.route}</b></span><span>LLM 콜 ${j.calls}</span>
+    <span>모델 ${j.model}</span><span>변경률 <b>${rate}</b></span><span class="badge g${j.gate_code}">${j.gate}</span>
+    ${j.rolled_back ? '<span class="badge g1">롤백 재실행됨</span>' : ''}${j.finalized ? `<span class="badge g0">finalize: ${j.finalized}</span>` : ''}`;
+  $('diff').innerHTML = j.diff_html; $('diag').textContent = j.diagnosis || '(light 경로: 진단 생략)';
+  $('gate').textContent = JSON.stringify(j.gate_report, null, 2); $('summary').textContent = j.summary || '(모델이 SUMMARY 블록을 내지 않음)';
+  $('log').textContent = j.log;
+}
+
+async function loadRuns() {
+  const rs = await fetch('/api/runs').then(r => r.json());
+  $('runs').innerHTML = rs.map(r => `<li data-id="${r.run_id}"><span class="badge g${r.gate_code}">${r.gate}</span> ${r.ts} · ${r.route} · ${r.model} · ${r.head}…</li>`).join('') || '<li>없음</li>';
+  $('runs').querySelectorAll('li[data-id]').forEach(li => li.onclick = async () => {
+    const j = await fetch('/api/runs/' + li.dataset.id).then(r => r.json()); $('in').value = j.input; show(j);
+  });
+}
+loadRuns();
+
+$('go').onclick = async () => {
+  const text = $('in').value.trim(); if (!text) return;
+  $('go').disabled = true; $('res').hidden = true; $('out').value = ''; $('stages').textContent = '';
+  $('status').textContent = '실행 중 — 로컬 모델은 수 분 걸릴 수 있습니다';
+  const t0 = Date.now();
+  try {
+    const r = await fetch('/api/humanize', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, genre: $('genre').value, model: $('model').value, route: $('route').value || null }) });
+    const reader = r.body.getReader(), dec = new TextDecoder(); let buf = '';
+    while (true) {
+      const { value, done } = await reader.read(); if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i; while ((i = buf.indexOf('\n\n')) >= 0) {
+        const line = buf.slice(0, i); buf = buf.slice(i + 2);
+        if (!line.startsWith('data: ')) continue;
+        const ev = JSON.parse(line.slice(6));
+        if (ev.stage) { $('stages').innerHTML += `<b>${ev.stage}</b> ${ev.msg} · `; if (ev.reset) $('out').value = ''; }
+        if (ev.token) { $('out').value += ev.token; $('out').scrollTop = $('out').scrollHeight; }
+        if (ev.error) throw new Error(ev.error);
+        if (ev.done) { show(ev.done); loadRuns(); }
+      }
+    }
+    $('status').textContent = `완료 ${((Date.now() - t0) / 1000).toFixed(0)}초`;
+  } catch (e) { $('status').textContent = '오류: ' + e.message; }
+  $('go').disabled = false;
+};
+</script>
