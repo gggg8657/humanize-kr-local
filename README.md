@@ -1,5 +1,14 @@
 # humanize-kr-local — Humanize KR 폐쇄망 로컬 실행 패키지
 
+> **한 줄 요약** — 오픈소스 Humanize KR([im-not-ai](https://github.com/epoko77-ai/im-not-ai), MIT)의 AI 한글 티 제거 파이프라인을
+> Claude Code 없이 폐쇄망에서 돌아가게 만든 패키지입니다. 파이썬 표준 라이브러리만 써서 설치 없이 폴더 복사로 배포되고,
+> 서버에 있는 Ollama나 vLLM에 환경변수 하나로 붙습니다. 원본의 정량 점수·게이트 스크립트는 그대로 쓰고 LLM 호출 부분만 로컬 서버로 바꿨습니다.
+> 로컬 8B 모델로 PoC를 돌려 동작을 확인했고, GPU 서버에서 큰 모델을 붙이면 품질이 올라갑니다.
+>
+> - **의존성**: 없음. Python 3.9 이상.
+> - **의미 훼손 안전장치**: 코드로 판정하는 게이트가 변경률 50% 초과·수치·고유명사 소실을 잡으면 결과를 버리고 원문을 반환.
+> - **모델**: 한국어 되는 30B급 이상 아무거나. 모델을 바꿔도 코드 수정 없음.
+
 [epoko77-ai/im-not-ai](https://github.com/epoko77-ai/im-not-ai) (Humanize KR, MIT)의 AI 한글 티 제거 파이프라인을
 **Claude Code 없이** 로컬 LLM 서버(Ollama · vLLM 등 OpenAI 호환)로 돌리는 웹 UI / CLI 패키지입니다.
 
