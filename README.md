@@ -16,7 +16,32 @@
 - 폐쇄망 배포: 이 폴더를 통째로 복사하면 끝. 모델 서빙은 기존 서버(Ollama, vLLM, LM Studio…)를 그대로 씁니다.
 - 원본 스킬의 light / standard / heavy 3경로, 결정적 게이트(변경률·구조·수치·서법), 롤백·finalize 규칙을 그대로 재현합니다.
 
-## 실행
+## 설치 (스크립트 하나)
+
+```bash
+# macOS / Linux / Windows Git Bash — 클론 → Python 확인 → LLM 서버 탐색(없으면 Ollama 설치·기동·모델 pull) → 자가검증 → 웹 서버 → 브라우저
+curl -fsSL https://raw.githubusercontent.com/gggg8657/humanize-kr-local/master/setup.sh | bash
+
+# 이미 폴더가 있으면 (zip 반입 등)
+bash setup.sh            # 시작
+bash setup.sh stop       # 종료
+
+# GPU 서버의 기존 LLM을 쓸 때 (탐색 생략)
+LLM_BASE_URL=http://gpu-server:8000/v1 bash setup.sh          # vLLM 등 OpenAI 호환
+LLM_BASE_URL=http://gpu-server:11434 bash setup.sh            # 원격 Ollama
+```
+
+Windows PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File setup.ps1          # 시작
+powershell -ExecutionPolicy Bypass -File setup.ps1 stop     # 종료
+```
+
+탐색 순서: `LLM_BASE_URL` 지정 → localhost Ollama(11434) → OpenAI 호환(8000 vLLM · 1234 LM Studio · 8080 llama.cpp) → 없으면 Ollama 설치(brew / install.sh / winget) 후 `MODEL`(기본 `qwen3:8b`) pull.
+폐쇄망에서 LLM 서버도 없고 인터넷도 없으면 서버 주소를 받아 오라는 안내와 함께 멈춥니다.
+
+## 수동 실행
 
 ```bash
 # Ollama (기본)
