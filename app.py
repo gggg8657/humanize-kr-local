@@ -69,6 +69,7 @@ def _clean(out):
     out = re.sub(r"<think>.*?</think>", "", out, flags=re.S).strip()
     out = re.sub(r"^```\w*\s*\n", "", out)
     out = re.sub(r"\n?```\s*$", "", out)
+    out = re.sub(r"\n?```\s*(<!--\s*HUMANIZE-SUMMARY)", r"\n\n\1", out)  # 본문만 펜스로 감싸고 요약을 뒤에 붙이는 모델(gemma4)
     return out.strip()
 
 
