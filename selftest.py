@@ -1,3 +1,4 @@
+import os
 #!/usr/bin/env python3
 """LLM 없이 결정적 파이프라인만 검증한다: shim → 후처리 → 4축 게이트 → diff.
 Ollama 호출을 가짜 윤문 함수로 바꿔 끼운다.  python3 selftest.py"""
@@ -42,5 +43,10 @@ assert r["calls"] == 3 and r["finalized"] == "corrected" and r["gate_code"] == 0
 calls.clear(); FAKE_OUT = [GOOD]
 r = app.humanize(SRC, "essay", "fake", "light")
 assert r["calls"] == 1 and r["diagnosis"] == ""
+
+# 저작권 표기: ui.html 에서 지워도 서버가 다시 붙인다 (LICENSE·NOTICE)
+import base64 as _b
+_h = app.signed(app.HTML.replace("data-sig", "").replace('name="author"', ""))
+assert "data-sig" in _h and 'name="author"' in _h and _b.b64decode("ZG9uZ2p1a2ltLmRldkBnbWFpbC5jb20=").decode() in _h, "저작권 표기 누락"
 
 print("selftest OK — runs:", [x["run_id"] for x in app.list_runs()[:4]])

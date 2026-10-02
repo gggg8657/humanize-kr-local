@@ -12,3 +12,4 @@ Files taken verbatim from the upstream repository (v2.3.2):
 
 Files authored for this package (also MIT):
   app.py, ui.html, goal-prompt.md, selftest.py, README.md
+  Copyright (c) 2026 김동주 <dongjukim.dev@gmail.com>
