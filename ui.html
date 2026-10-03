@@ -64,7 +64,7 @@
 <script>
 const $ = id => document.getElementById(id);
 const MODEL_DEFAULT = %MODEL%;
-fetch('/api/models').then(r => r.json()).then(ms => {
+fetch('api/models').then(r => r.json()).then(ms => {
   $('model').innerHTML = ms.map(m => `<option ${m === MODEL_DEFAULT ? 'selected' : ''}>${m}</option>`).join('');
 }).catch(() => $('status').textContent = 'LLM 서버에 연결할 수 없습니다 (LLM_BASE_URL 확인)');
 
@@ -86,10 +86,10 @@ function show(j) {
 }
 
 async function loadRuns() {
-  const rs = await fetch('/api/runs').then(r => r.json());
+  const rs = await fetch('api/runs').then(r => r.json());
   $('runs').innerHTML = rs.map(r => `<li data-id="${r.run_id}"><span class="badge g${r.gate_code}">${r.gate}</span> ${r.ts} · ${r.route} · ${r.model} · ${r.head}…</li>`).join('') || '<li>없음</li>';
   $('runs').querySelectorAll('li[data-id]').forEach(li => li.onclick = async () => {
-    const j = await fetch('/api/runs/' + li.dataset.id).then(r => r.json()); $('in').value = j.input; show(j);
+    const j = await fetch('api/runs/' + li.dataset.id).then(r => r.json()); $('in').value = j.input; show(j);
   });
 }
 loadRuns();
@@ -100,7 +100,7 @@ $('go').onclick = async () => {
   $('status').textContent = '실행 중 — 로컬 모델은 수 분 걸릴 수 있습니다';
   const t0 = Date.now();
   try {
-    const r = await fetch('/api/humanize', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    const r = await fetch('api/humanize', { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ text, genre: $('genre').value, model: $('model').value, route: $('route').value || null }) });
     const reader = r.body.getReader(), dec = new TextDecoder(); let buf = '';
     while (true) {
