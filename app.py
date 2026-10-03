@@ -312,6 +312,8 @@ class H(BaseHTTPRequestHandler):
             self._send({"error": f"{type(e).__name__}: {e}"}, code=500)
 
     def do_POST(self):
+        if self.path != "/api/humanize":
+            return self._send({"error": "not found"}, code=404)
         req = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
         text = (req.get("text") or "").strip()
         if not text:
