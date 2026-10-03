@@ -30,7 +30,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 ROOT = os.path.dirname(os.path.abspath(__file__))
 REFS = os.path.join(ROOT, "skills", "humanize-korean", "references")
 SCRIPTS = os.path.join(ROOT, "scripts")
-WS = os.path.join(ROOT, "_workspace")
+WS = os.environ.get("WORKSPACE") or os.path.join(ROOT, "_workspace")  # 포털이 AGENT_DATA/<도구> 로 모아 줌
 OLLAMA = os.environ.get("OLLAMA_HOST", "http://localhost:11434").rstrip("/")
 MODEL = os.environ.get("LLM_MODEL", os.environ.get("OLLAMA_MODEL", "qwen3:8b"))
 PORT = int(os.environ.get("PORT", "8765"))
