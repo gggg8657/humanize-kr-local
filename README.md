@@ -125,8 +125,16 @@ skills/humanize-korean/references/
 - 1만 5천 자 초과 청킹(`--chunk` + `reassemble_chunks.py`)은 넣지 않았습니다. 원본 실측상 단일 콜이 더 싸고 품질이 같습니다. 장문이 필요하면 추가.
 - 진단·finalize 프롬프트는 원본 역할 정의를 그대로 씁니다. 로컬 모델용 few-shot 튜닝은 하지 않았습니다.
 
-## 출처 / 라이선스
+## 라이선스
 
 이 패키지는 **[epoko77-ai/im-not-ai](https://github.com/epoko77-ai/im-not-ai)** (Humanize KR v2.3.2)의 파생물입니다.
 `scripts/`, `skills/humanize-korean/references/` 아래 파일은 원본 저장소의 것을 수정 없이 가져왔고, `app.py` · `ui.html` · `goal-prompt.md` · `selftest.py`는 이 패키지에서 새로 작성했습니다.
 원본 저작권은 원저자(epoko77-ai)에게 있으며, 원본과 동일하게 [MIT License](LICENSE)로 배포합니다. `NOTICE` 참조.
+
+## 출처·감사 (Credits)
+
+- **원본: [epoko77-ai/im-not-ai](https://github.com/epoko77-ai/im-not-ai)** (Humanize KR v2.3.2, MIT) — `scripts/`, `skills/humanize-korean/references/` 는 원본 그대로입니다. 원본 저작권은 원저자에게 있습니다.
+- **LLM 실행** — OpenAI 호환 API 로 호출합니다(모델 가중치는 동봉하지 않음). 기본 배포는 [Ollama](https://github.com/ollama/ollama) (MIT) 위의 Google [Gemma](https://ai.google.dev/gemma) `gemma4:31b` — 모델 이용 조건은 Gemma 배포처 참고.
+- 이 도구는 [agent-page-portal](https://github.com/gggg8657/agent-page-portal) 에 연결해 쓰도록 만들었습니다(단독 실행도 됨).
+
+저작권 표기·전체 목록은 `NOTICE` 를 보세요.
