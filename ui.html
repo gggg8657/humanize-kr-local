@@ -26,6 +26,8 @@
   #runs{font-size:13px}#runs li{cursor:pointer;padding:3px 0;list-style:none}#runs li:hover{color:var(--acc)}
   details{margin-top:14px}summary{cursor:pointer;color:var(--muted);font-size:13px}
   @media (max-width:700px){textarea{height:200px}}
+  /* 넘침 방지: 긴 단어(URL·파일명)·표 줄바꿈, 탭 줄바꿈 */
+  #meta,#diff,#runs,#stages,#status{overflow-wrap:anywhere}.badge{max-width:100%;overflow-wrap:anywhere}.tabs{flex-wrap:wrap}
 </style>
 
 <h1>Humanize KR <small>— 로컬 Ollama · AI 한글 티 제거</small></h1>
