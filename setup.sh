@@ -147,7 +147,7 @@ ok "$MODEL"
 
 # ── 6. 자가검증 ──────────────────────────────────────────────────────────
 step "자가검증"
-spin "결정적 파이프라인 4 시나리오" "$PY" selftest.py || die "selftest 실패 — scripts/ 또는 references/ 파일이 빠졌는지 확인"
+spin "결정적 파이프라인 4 시나리오" env -u WORKSPACE "$PY" selftest.py || die "selftest 실패 — scripts/ 또는 references/ 파일이 빠졌는지 확인"
 ok "shim → 게이트 → 롤백 → finalize 통과"
 
 # ── 7. 웹 서버 ───────────────────────────────────────────────────────────
