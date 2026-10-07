@@ -1,20 +1,49 @@
-# humanize-kr-local — Humanize KR 폐쇄망 로컬 실행 패키지
+# humanize-kr-local — Humanize KR · 한국어 윤문
 
-> **한 줄 요약** — 오픈소스 Humanize KR([im-not-ai](https://github.com/epoko77-ai/im-not-ai), MIT)의 AI 한글 티 제거 파이프라인을
-> Claude Code 없이 폐쇄망에서 돌아가게 만든 패키지입니다. 파이썬 표준 라이브러리만 써서 설치 없이 폴더 복사로 배포되고,
-> 서버에 있는 Ollama나 vLLM에 환경변수 하나로 붙습니다. 원본의 정량 점수·게이트 스크립트는 그대로 쓰고 LLM 호출 부분만 로컬 서버로 바꿨습니다.
-> 로컬 8B 모델로 PoC를 돌려 동작을 확인했고, GPU 서버에서 큰 모델을 붙이면 품질이 올라갑니다.
->
-> - **의존성**: 없음. Python 3.9 이상.
-> - **의미 훼손 안전장치**: 코드로 판정하는 게이트가 변경률 50% 초과·수치·고유명사 소실을 잡으면 결과를 버리고 원문을 반환.
-> - **모델**: 한국어 되는 30B급 이상 아무거나. 모델을 바꿔도 코드 수정 없음.
+AI가 쓴 한글의 번역투·상투구·기계적 구조를 로컬 LLM으로 걷어내고, 원문과 결과를 비교한 뒤 변경률·수치·서법을 코드로 점검하는 웹 UI / CLI입니다.
 
-[epoko77-ai/im-not-ai](https://github.com/epoko77-ai/im-not-ai) (Humanize KR, MIT)의 AI 한글 티 제거 파이프라인을
-**Claude Code 없이** 로컬 LLM 서버(Ollama · vLLM 등 OpenAI 호환)로 돌리는 웹 UI / CLI 패키지입니다.
+![Humanize KR 실행 화면 — ① 윤문 결과 ② 변경 비교 ③ 게이트 상태](docs/img/humanize-usage.png)
 
-- 외부 의존성 0 — Python 3.9+ 표준 라이브러리만. `pip install` 없음.
-- 폐쇄망 배포: 이 폴더를 통째로 복사하면 끝. 모델 서빙은 기존 서버(Ollama, vLLM, LM Studio…)를 그대로 씁니다.
-- 원본 스킬의 light / standard / heavy 3경로, 결정적 게이트(변경률·구조·수치·서법), 롤백·finalize 규칙을 그대로 재현합니다.
+## 무엇을 하나
+
+- 오픈소스 Humanize KR([epoko77-ai/im-not-ai](https://github.com/epoko77-ai/im-not-ai), MIT)의 AI 한글 티 제거 파이프라인을 **Claude Code 없이** 로컬 LLM 서버(Ollama · vLLM 등 OpenAI 호환)로 돌립니다. 원본의 정량 점수·게이트 스크립트는 그대로 쓰고 LLM 호출 부분만 바꿨습니다.
+- 경로 light / standard / heavy(1·2·3콜)와 결정적 게이트(변경률·구조·수치·서법), 롤백·finalize 규칙을 재현합니다.
+- **의미 훼손 안전장치**: 변경률이 50%를 넘으면 보수 강도로 한 번 다시 윤문하고, 재시도도 ABORT면 원문을 반환합니다.
+- 외부 의존성 0 — Python 3.9+ 표준 라이브러리만. 폴더 복사로 폐쇄망 배포.
+
+## 사용 방법
+
+포털 경유(`http://<포털>:8700/t/humanize-kr-local/`) 또는 단독 실행(`http://localhost:8765`) 화면에서:
+
+1. **원문과 장르를 고른다** — 왼쪽 칸에 한국어 글을 붙여 넣고 장르(essay·column·report·blog·abstract)와 경로(auto 권장, 또는 light·standard·heavy)를 선택합니다.
+2. **윤문을 실행한다** — 정량 점수 계산 → (필요 시) 진단 → 윤문 → 후처리·게이트 검사 순서로 진행되고, 오른쪽에 결과가 토큰 단위로 흘러나옵니다. (그림 ①)
+3. **비교와 게이트를 확인한다** — 아래 **변경 비교** 탭에서 삭제(빨강)·추가(초록)를 보고(그림 ②), 실행 줄의 경로·LLM 콜 수·변경률·게이트 결과(그림 ③)와 **게이트 리포트**를 확인한 뒤 **결과 복사**. 경고가 있으면 원문과 대조합니다.
+
+1만 5천 자 이상은 나눠서 넣으세요.
+
+## 예시
+
+가상 자료 정리 사례를 `gemma4:31b` · 장르 report · 경로 light로 실제 실행한 결과입니다(1콜, 약 19초, 변경률 13.9%, 게이트 OK, 재시도 없음).
+
+입력:
+
+```text
+이번 주에는 자료 정리 작업이 진행되었습니다. 총 12건의 문서를 검토했으며, 이 과정에서 날짜 표기의 통일이 필요하다는 점을 확인했습니다. 또한 파일 이름을 정리함으로써 자료를 찾는 시간을 줄일 수 있었습니다. 앞으로도 이러한 개선을 지속적으로 추진할 필요가 있습니다. 다음 주에는 안내문 초안을 작성할 예정입니다.
+```
+
+출력:
+
+```text
+이번 주에는 자료 정리 작업을 진행했습니다. 총 12건의 문서를 검토하며 날짜 표기를 통일해야 함을 확인했습니다. 또한 파일 이름을 정리해 자료 검색 시간을 줄였습니다. 앞으로도 이러한 개선을 지속적으로 추진할 필요가 있습니다. 다음 주에는 안내문 초안을 작성할 예정입니다.
+```
+
+게이트 통과가 문장 품질 전체를 보증하지는 않습니다. 이 결과에서도 "앞으로도 이러한 개선을 지속적으로 추진할 필요가 있습니다"는 그대로 남았습니다.
+
+<details><summary>입력 화면</summary>
+
+![Humanize KR 입력 화면](docs/img/humanize-input.png)
+
+</details>
 
 ## 설치 (스크립트 하나)
 
@@ -61,12 +90,15 @@ python3 selftest.py
 | 환경변수 | 기본 | 설명 |
 |---|---|---|
 | `LLM_API` | `ollama` | `ollama` 또는 `openai` |
-| `LLM_BASE_URL` | `http://localhost:11434` / `http://localhost:8000/v1` | 서버 주소 |
-| `LLM_MODEL` | `qwen3:8b` | 기본 모델 (UI에서 변경 가능) |
+| `LLM_BASE_URL` | `OLLAMA_HOST` 또는 `http://localhost:11434` / `http://localhost:8000/v1` | 서버 주소 |
+| `LLM_MODEL` | `qwen3:8b` | 기본 모델 (UI에서 변경 가능). `OLLAMA_MODEL` 도 인식 |
 | `LLM_API_KEY` | (없음) | OpenAI 호환 서버에 키가 필요할 때 |
 | `NUM_CTX` | `16384` | Ollama 컨텍스트 창 (룰북 + 원문이 잘리지 않게) |
 | `TEMPERATURE` | `0.2` | |
 | `PORT` | `8765` | |
+| `WORKSPACE` | `./_workspace` | 실행 기록 저장 위치 (포털이 `_data/humanize-kr-local` 로 지정) |
+
+[agent-page-portal](https://github.com/gggg8657/agent-page-portal)에서 띄우면 `PORT`·`WORKSPACE`를 포털이 정하고, LLM 설정은 포털 프로세스의 환경변수를 물려받습니다. 현재 운영 기본값은 로컬 Ollama의 `gemma4:31b`입니다. 단독 실행 시 코드 기본값은 `qwen3:8b`입니다.
 
 ## 파이프라인
 
@@ -90,7 +122,7 @@ python3 selftest.py
 ## 웹 UI
 
 모델·장르·경로 선택 → 윤문. 진행 단계와 윤문 토큰이 실시간으로 표시되고, 결과는 **변경 비교(diff)** · 진단 · 게이트 리포트 · SUMMARY · 로그 탭으로 봅니다.
-모든 실행은 `_workspace/{날짜-태그}/`에 원본·진단·중간본·최종본·`result.json`으로 남고, UI 하단 "이전 실행 기록"에서 다시 불러올 수 있습니다.
+모든 실행은 `$WORKSPACE`(기본 `_workspace/`)`/{날짜-태그}/`에 원본·진단·중간본·최종본·`result.json`으로 남고, UI 하단 "이전 실행 기록"에서 다시 불러올 수 있습니다.
 
 ## 폴더 구조 (원본에서 동작에 필요한 것만)
 
@@ -109,7 +141,7 @@ skills/humanize-korean/references/
 
 원본 스크립트는 `skills/humanize-korean/references/` 경로를 상대로 참조하므로 레이아웃을 바꾸지 않았습니다.
 
-## 실측 (M-시리즈 Mac, PoC)
+## 초기 실측 (M-시리즈 Mac, PoC)
 
 | 모델 | 경로 | 콜 | 소요 | 변경률 | 게이트 |
 |---|---|---|---|---|---|
