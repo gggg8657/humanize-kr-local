@@ -2,6 +2,8 @@
 
 AI가 쓴 한글의 번역투·상투구·기계적 구조를 로컬 LLM으로 걷어내고, 원문과 결과를 비교한 뒤 변경률·수치·서법을 코드로 점검하는 웹 UI / CLI입니다.
 
+> ⚠️ 연구·내부 시험용 프로토타입입니다(배포·상업 서비스용 아님). 제3자 구성요소의 라이선스는 THIRD_PARTY_NOTICES.md 를 확인하세요.
+
 ![Humanize KR 실행 화면 — ① 윤문 결과 ② 변경 비교 ③ 게이트 상태](docs/img/humanize-usage.png)
 
 ## 무엇을 하나
@@ -172,7 +174,11 @@ skills/humanize-korean/references/
 ## 출처·감사 (Credits)
 
 - **원본: [epoko77-ai/im-not-ai](https://github.com/epoko77-ai/im-not-ai)** (Humanize KR v2.3.2, MIT) — `scripts/`, `skills/humanize-korean/references/` 는 원본 그대로입니다. 원본 저작권은 원저자에게 있습니다.
-- **LLM 실행** — OpenAI 호환 API 로 호출합니다(모델 가중치는 동봉하지 않음). 기본 배포는 [Ollama](https://github.com/ollama/ollama) (MIT) 위의 Google [Gemma](https://ai.google.dev/gemma) `gemma4:31b` — 모델 이용 조건은 Gemma 배포처 참고.
+- **LLM 실행** — OpenAI 호환 API 로 호출합니다(모델 가중치는 동봉하지 않음). 기본 배포는 [Ollama](https://github.com/ollama/ollama) (MIT) 위의 Google [Gemma 4](https://huggingface.co/google/gemma-4-31B-it) `gemma4:31b` (모델 카드 기준 Apache-2.0). `LLM_MODEL` 을 주지 않으면 코드 기본값은 `qwen3:8b` ([Qwen3](https://huggingface.co/Qwen/Qwen3-8B), Apache-2.0). 다른 모델을 쓰면 그 모델의 라이선스를 확인하세요.
 - 이 도구는 [agent-page-portal](https://github.com/gggg8657/agent-page-portal) 에 연결해 쓰도록 만들었습니다(단독 실행도 됨).
 
-저작권 표기·전체 목록은 `NOTICE` 를 보세요.
+저작권 표기는 `NOTICE`, 제3자 구성요소 전체 목록·라이선스·상업 이용 확인 사항은 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) 를 보세요.
+
+## 만든 사람
+
+DongJu Kim (gggg8657) — 로컬 패키징·웹 UI·CLI·setup 설계·구현 (윤문 규칙·검사 스크립트 원본: epoko77-ai 의 im-not-ai)
