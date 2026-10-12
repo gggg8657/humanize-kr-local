@@ -172,11 +172,12 @@ GATE_LABEL = ["OK", "WARN (30%+)", "ABORT (50%+)", "ERROR"]
 
 
 # ── 파이프라인 ──────────────────────────────────────────────────────────
-def humanize(text, genre="essay", model=MODEL, route=None, emit=lambda ev: None):
+def humanize(text, genre="essay", model=MODEL, route=None, emit=lambda ev: None, ws=None):
+    ws = ws or WS  # 사용자 폴더 (없으면 예전 WORKSPACE)
     if genre not in GENRES:
         genre = "essay"
     run_id = f"{datetime.date.today()}-{secrets.token_hex(2)}"
-    d = os.path.join(WS, run_id)
+    d = os.path.join(ws, run_id)
     os.makedirs(d)
     write(f"{d}/01_input.txt", text)
     log, calls = [], 0
@@ -265,12 +266,14 @@ def humanize(text, genre="essay", model=MODEL, route=None, emit=lambda ev: None)
     return result
 
 
-def list_runs():
+def list_runs(ws=None):
+    ws = ws or WS  # 사용자 폴더 (없으면 예전 WORKSPACE)
     out = []
-    if not os.path.isdir(WS):
+    if not os.path.isdir(ws):
         return out
-    for name in sorted(os.listdir(WS), key=lambda n: os.path.getmtime(os.path.join(WS, n)), reverse=True)[:50]:
-        p = os.path.join(WS, name, "result.json")
+    names = [n for n in os.listdir(ws) if n != "u"]  # u/ = 다른 사용자 폴더
+    for name in sorted(names, key=lambda n: os.path.getmtime(os.path.join(ws, n)), reverse=True)[:50]:
+        p = os.path.join(ws, name, "result.json")
         if os.path.exists(p):
             try:
                 j = json.load(open(p, encoding="utf-8"))
@@ -282,6 +285,16 @@ def list_runs():
 
 
 # ── HTTP ───────────────────────────────────────────────────────────────
+def user_ws(h):
+    """포털이 넘긴 사용자별 작업 폴더. owner(서버 주인)·헤더 없음(단독 실행) = 예전 WORKSPACE 그대로"""
+    u = (h.headers.get("X-Agent-User") or "owner").strip()
+    if u == "owner":
+        return WS
+    d = os.path.join(WS, "u", re.sub(r"[^A-Za-z0-9_.-]", "_", u)[:64] or "_")
+    os.makedirs(d, exist_ok=True)
+    return d
+
+
 HTML = read(os.path.join(ROOT, "ui.html")) if os.path.exists(os.path.join(ROOT, "ui.html")) else "ui.html 없음"
 
 # ── 저작권 표기 (LICENSE·NOTICE 참고) ─────────────────────────────────────
@@ -321,10 +334,13 @@ class H(BaseHTTPRequestHandler):
             if self.path == "/api/models":
                 return self._send(models())
             if self.path == "/api/runs":
-                return self._send(list_runs())
+                return self._send(list_runs(user_ws(self)))
             m = re.fullmatch(r"/api/runs/(\d{4}-\d{2}-\d{2}-[0-9a-f]{4})", self.path)
             if m:
-                return self._send(read(os.path.join(WS, m.group(1), "result.json")).encode())
+                p = os.path.join(user_ws(self), m.group(1), "result.json")
+                if not os.path.exists(p):
+                    return self._send({"error": "not found"}, code=404)
+                return self._send(read(p).encode())
             self._send(signed(HTML.replace("%MODEL%", json.dumps(MODEL))).encode(), "text/html; charset=utf-8")
         except Exception as e:
             self._send({"error": f"{type(e).__name__}: {e}"}, code=500)
@@ -347,7 +363,7 @@ class H(BaseHTTPRequestHandler):
 
         try:
             emit({"done": humanize(text, req.get("genre") or "essay", req.get("model") or MODEL,
-                                   req.get("route"), emit)})
+                                   req.get("route"), emit, user_ws(self))})
         except Exception as e:
             emit({"error": f"{type(e).__name__}: {e}"})
 
@@ -362,4 +378,4 @@ if __name__ == "__main__":
         print(json.dumps(r, ensure_ascii=False, indent=1))
         sys.exit(0 if r["gate_code"] < 2 else 2)
     print(f"Humanize KR local → http://localhost:{PORT}  (api={LLM_API} base={BASE} model={MODEL})  {_SIG}")
-    ThreadingHTTPServer(("", PORT), H).serve_forever()
+    ThreadingHTTPServer((os.environ.get("BIND", ""), PORT), H).serve_forever()
