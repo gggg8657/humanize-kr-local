@@ -169,7 +169,14 @@ skills/humanize-korean/references/
 
 이 패키지는 **[epoko77-ai/im-not-ai](https://github.com/epoko77-ai/im-not-ai)** (Humanize KR v2.3.2)의 파생물입니다.
 `scripts/`, `skills/humanize-korean/references/` 아래 파일은 원본 저장소의 것을 수정 없이 가져왔고, `app.py` · `ui.html` · `goal-prompt.md` · `selftest.py`는 이 패키지에서 새로 작성했습니다.
-원본 저작권은 원저자(epoko77-ai)에게 있으며, 원본과 동일하게 [MIT License](LICENSE)로 배포합니다. `NOTICE` 참조.
+
+- 이 패키지에서 작성한 파일: [PolyForm Noncommercial License 1.0.0](LICENSE) — Copyright 2026 DongJu Kim (gggg8657).
+- `scripts/`, `skills/humanize-korean/references/`: 원본 저작권은 원저자(epoko77-ai)에게 있으며, 원래의 MIT License([`LICENSE-im-not-ai`](LICENSE-im-not-ai))를 그대로 따릅니다.
+
+- 비상업 목적(개인 연구·학습·시험, 교육기관·공공 연구기관·정부기관·비영리 단체 등)이면 쓰고 고치고 다시 배포할 수 있습니다. 다시 배포할 때는 `LICENSE` 와 `Required Notice:` 줄을 함께 주세요.
+- 상업적 이용은 저작자의 별도 허락이 필요합니다.
+- 2026-10-13 이전 버전(커밋 `612259e` 까지)을 MIT 로 받아 간 사본에는 MIT 가 계속 적용됩니다. 이 변경은 이후 버전에만 적용됩니다.
+- 제3자 구성요소는 각자의 원래 라이선스를 따르며 이 라이선스로 바뀌지 않습니다(`THIRD_PARTY_NOTICES.md`, `NOTICE`).
 
 ## 출처·감사 (Credits)
 
