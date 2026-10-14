@@ -378,4 +378,4 @@ if __name__ == "__main__":
         print(json.dumps(r, ensure_ascii=False, indent=1))
         sys.exit(0 if r["gate_code"] < 2 else 2)
     print(f"Humanize KR local → http://localhost:{PORT}  (api={LLM_API} base={BASE} model={MODEL})  {_SIG}")
-    ThreadingHTTPServer((os.environ.get("BIND", ""), PORT), H).serve_forever()
+    ThreadingHTTPServer((os.environ.get("BIND", "127.0.0.1"), PORT), __import__("portal_auth").install(H, "humanize-kr-local")).serve_forever()
