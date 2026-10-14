@@ -26,6 +26,7 @@ import sys
 import urllib.error
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import portal_auth  # 포털 서명 확인 관문·오류 문장 정리(원본 agent-page-portal/sdk/portal_auth.py)
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 REFS = os.path.join(ROOT, "skills", "humanize-korean", "references")
@@ -341,9 +342,11 @@ class H(BaseHTTPRequestHandler):
                 if not os.path.exists(p):
                     return self._send({"error": "not found"}, code=404)
                 return self._send(read(p).encode())
+            if self.path.split("?")[0].startswith("/api/"):   # 없는 API 경로는 화면 대신 JSON 404
+                return self._send({"error": "not found"}, code=404)
             self._send(signed(HTML.replace("%MODEL%", json.dumps(MODEL))).encode(), "text/html; charset=utf-8")
         except Exception as e:
-            self._send({"error": f"{type(e).__name__}: {e}"}, code=500)
+            self._send({"error": portal_auth.scrub(f"{type(e).__name__}: {e}")}, code=500)
 
     def do_POST(self):
         if self.path != "/api/humanize":
@@ -365,7 +368,7 @@ class H(BaseHTTPRequestHandler):
             emit({"done": humanize(text, req.get("genre") or "essay", req.get("model") or MODEL,
                                    req.get("route"), emit, user_ws(self))})
         except Exception as e:
-            emit({"error": f"{type(e).__name__}: {e}"})
+            emit({"error": portal_auth.scrub(f"{type(e).__name__}: {e}")})
 
 
 if __name__ == "__main__":
@@ -378,4 +381,4 @@ if __name__ == "__main__":
         print(json.dumps(r, ensure_ascii=False, indent=1))
         sys.exit(0 if r["gate_code"] < 2 else 2)
     print(f"Humanize KR local → http://localhost:{PORT}  (api={LLM_API} base={BASE} model={MODEL})  {_SIG}")
-    ThreadingHTTPServer((os.environ.get("BIND", "127.0.0.1"), PORT), __import__("portal_auth").install(H, "humanize-kr-local")).serve_forever()
+    ThreadingHTTPServer((os.environ.get("BIND", "127.0.0.1"), PORT), portal_auth.install(H, "humanize-kr-local")).serve_forever()
