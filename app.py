@@ -316,6 +316,24 @@ def signed(html):
     return html
 
 
+def safe_emit(wfile):
+    """SSE 한 줄 쓰기. 브라우저가 떠나 연결이 끊기면(포털도 도구 쪽 연결을 닫음) 그 뒤 쓰기는 조용히 버린다 —
+    끊김은 취소가 아니라서 작업은 끝까지 하고 결과는 실행 기록에 남는다"""
+    gone = []
+
+    def emit(ev):
+        if gone:
+            return
+        b = f"data: {json.dumps(ev, ensure_ascii=False)}\n\n".encode()
+        try:
+            wfile.write(b)
+            wfile.flush()
+        except OSError:  # BrokenPipe·ConnectionReset·ConnectionAborted·닫힌 소켓
+            gone.append(1)
+            print("클라이언트 연결 끊김 — 작업은 계속", file=sys.stderr, flush=True)
+    return emit
+
+
 class H(BaseHTTPRequestHandler):
     def log_message(self, fmt, *a):
         if "/api/humanize" in (a[0] if a else ""):
@@ -360,9 +378,7 @@ class H(BaseHTTPRequestHandler):
         self.send_header("Cache-Control", "no-cache")
         self.end_headers()
 
-        def emit(ev):
-            self.wfile.write(f"data: {json.dumps(ev, ensure_ascii=False)}\n\n".encode())
-            self.wfile.flush()
+        emit = safe_emit(self.wfile)
 
         try:
             emit({"done": humanize(text, req.get("genre") or "essay", req.get("model") or MODEL,
